@@ -1,0 +1,58 @@
+---
+output:
+  word_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+# Module 1 - Refresher Assignment
+## Sox, Morgan
+```{r}
+#install.packages("tidyverse")
+library(tidyverse)
+diamonddata = diamonds
+nrow(diamonddata)
+ncol(diamonddata)
+
+ggplot(diamonds, aes(carat,price))+
+  geom_point()
+```
+
+We notice as the size of the carat increases the price does increase in some cases, but we notice that the price is not completely dependent on the carat size. We should probably explore more variables to see if there is a better relationship to price than using carat.  
+
+```{r}
+ggplot(diamonds, aes(carat,price,color=cut))+
+  geom_point()
+```
+
+It seems like cut isn't very signifigant in price, but it is also very hard to see in the highly concentrated carats. We do notice that it appears that ideal cut and are concentrated at or below the 2 carat mark, but they have a wide range of prices.   
+
+
+```{r}
+Dia <- ggplot(diamonds, aes(carat,price,color=cut))+
+  geom_point()
+
+Dia + facet_grid(. ~ color)
+```
+
+Based on the graph above it is very hard to see a strong relationship between the 4 variables. There are many diamonds at the same price point from all cut catagories, color catagories, and many different sized carats. To look into the relationship more deeply taking a same of the population would be helpful.  
+```{r}
+inventory <- read_csv("InventoryData.csv")
+inventoryA <-filter(inventory, Supplier == "A")
+inventoryA = mutate(inventoryA, OnHandRatio = `On Hand` / `Annual Demand`)
+```
+
+In the new inventoryA dataframe there are 3695 observations and 6 variables.
+The mutate line of code created a new variable which is the On Hand variable divided by the Annual Demand variable as a ratio. 
+
+```{r}
+avg_cost <- inventory %>% group_by(`Item SKU`) %>% summarise(SKUAvgCost = mean(`Cost per Unit ($)`))
+```
+
+Based on my previous experience in R the most challenging topics would be extracting or replacing subsets in dataframes. I also had a challenge in using the different aes functions on certain charts.
+
+```{r}
+
+x = 2
+
+```

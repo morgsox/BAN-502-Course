@@ -1,0 +1,102 @@
+---
+output:
+  word_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+# Module 2 - Correlation and Simple Linear Regression
+## Sox, Morgan
+```{r}
+#install.packages("tidyverse")
+#install.packages("GGally")
+library(tidyverse)
+library(GGally)
+
+air = airquality
+summary(air)
+is.na(air)
+sum(is.na(air))
+```
+
+Task 1: 
+
+There are 153 obeservations in the dataset and 6 variables. We see there is a variable for Ozone, Solar, Wind, Temperature, Month, and Day. the majority of variables are integers except wind which is a numerical variable. We see several missing values in the Ozone and Solar.R variables. There is a total 44 missing observations. Ozone is likely the Y variable based on the other variables in the dataset.
+
+```{r}
+air2 = air %>% filter(!is.na(Ozone)) %>% filter(!is.na(Solar.R))
+summary(air2)
+```
+
+Task 2: 
+
+There are now 111 Observations in the new air2 dataset. 
+
+```{r}
+ggpairs(air2)
+ggcorr(air2, label = TRUE)
+```
+
+Task 3: 
+
+a. Temperature is the most strongly correlated with Ozone. 
+b. Day is the least strongly corelated to Ozone. 
+
+```{r}
+ggplot(air2, aes(Temp,Ozone))+
+  geom_point()
+```
+
+Task 4: 
+
+Based on the graph we see that as temerature increases the Ozone measure also increases. It seems like a slight trend but not a direct one to one relationship.  
+
+```{r}
+model1 = lm(Ozone ~ Temp, air2)
+summary(model1)
+```
+We see that as we add one additional degree of temperature we see a 2.4391 increase in the Ozone measure. The p-value associated with the Temp variable is very small meaning Temperature is a signifigant predictor of Ozone. Also noticed is that the Multiple R-squared value is 0.488 and is fairly a moderately strong fit. These two findings combined help make a case that our model is fairly good. 
+
+```{r}
+confint(model1)
+```
+
+The slope coefficient falls between 1.964787 and 2.913433. 
+
+```{r}
+ggplot(air2, aes(Temp,Ozone))+
+  geom_point()+
+geom_smooth(method="lm", se = FALSE)
+```
+Task 7:
+```{r}
+Tempdata = data.frame( Temp = c(80))
+predict(model1, newdata = Tempdata, interval = "predict")
+```
+
+Task 8: 
+```{r}
+ggplot(air2, aes(Day,Ozone))+
+  geom_point()
+```
+Based on the graph above we do not see any trends in the data points as the number of days gets higher or lower. This will be an interesting series to graph an explore the linear regression. 
+
+```{r}
+model2 = lm(Ozone ~ Day, air2)
+summary(model2)
+```
+Task 9: 
+We see that as we add one additional unit of Day the Ozone measure decreases by 0.01983 units. We also see that the Multiple R-squared value is very close to zero and the p-value is .9569 meaning it is not signifigant and therefore not a good model. The slope will likely fall between -0.745321 and 0.7056539.
+
+```{r}
+confint(model2)
+```
+
+Task 10: 
+```{r}
+ggplot(air2, aes(Day,Ozone))+
+  geom_point()+
+geom_smooth(method="lm", se = FALSE)
+```
+
+

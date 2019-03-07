@@ -1,0 +1,172 @@
+---
+output:
+  word_document: default
+  html_document: default
+editor_options: 
+  chunk_output_type: console
+---
+# Module 2 - Correlation and Multiple Linear Regression
+## Sox, Morgan
+```{r}
+#install.packages("tidyverse")
+#install.packages("GGally")
+#install.packages("leaps")
+#install.packages("MASS")
+library(tidyverse)
+library(GGally)
+library(leaps)
+library(MASS)
+```
+
+```{r}
+bike <- read_csv("hour.csv")
+bike = bike %>% mutate(season = as_factor(as.character(season))) %>%
+mutate(season = fct_recode(season,
+"Spring" = "1",
+"Summer" = "2",
+"Fall" = "3",
+"Winter" = "4"))
+```
+```{r}
+bike = bike %>% mutate(yr = as_factor(as.character(yr)))
+bike = bike %>% mutate(mnth = as_factor(as.character(mnth)))
+bike = bike %>% mutate(hr = as_factor(as.character(hr)))
+```
+
+```{r}
+bike = bike %>% mutate(holiday = as_factor(as.character(holiday))) %>%
+mutate(holiday = fct_recode(holiday,
+"NotHoliday" = "0",
+"Holiday" = "1"))
+```
+
+```{r}
+bike = bike %>% mutate(workingday = as_factor(as.character(workingday))) %>%
+mutate(workingday = fct_recode(workingday,
+"NotWorkingday" = "0",
+"WorkingDay" = "1"))
+```
+
+```{r}
+bike = bike %>% mutate(weathersit = as_factor(as.character(weathersit))) %>%
+mutate(weathersit = fct_recode(weathersit,
+"NoPrecip" = "1",
+"Misty" = "2",
+"LightPrecip" = "3",
+"HeavyPrecip" = "4"))
+```
+
+```{r}
+bike = bike %>% mutate(weekday = as_factor(as.character(weekday))) %>%
+mutate(weekday = fct_recode(weekday,
+"Sunday" = "0",
+"Monday" = "1",
+"Tuesday" = "2",
+"Wednesday" = "3",
+"Thursday" = "4",
+"Friday" = "5",
+"Saturday" = "6"))
+```
+Why do we convert “yr”, “mnth”, and “hr” into factors? Why not just leave them as numbers? We convert since they are catagorical values stored as numbers. 
+
+```{r}
+ggcorr(bike, label = TRUE)
+```
+
+It appears that Temperature is the most highly correlated quantiative factor to count.
+
+```{r}
+ggplot(bike,aes(x=hr,y=count)) + geom_boxplot()
+```
+It is obvious that the hour of the day affects count as people likely rent bikes more when it is light outside and probably during normal commute times for work, school, or to and from lunch. 
+
+```{r}
+ggplot(bike,aes(x=season,y=count)) + geom_boxplot()
+```
+
+Season should also be included in the regression because you are mosre likely to ride a bike when the weather is fairly good. 
+
+```{r}
+ggplot(bike,aes(x=yr,y=count)) + geom_boxplot()
+```
+
+Year is likely not a signifigant value to add to the regression, even though we do see an higher number of bikes being used in the later year, it is likely due to more awareness of bikes being offered, not actually because of the year itself. 
+
+```{r}
+ggplot(bike,aes(x=mnth,y=count)) + geom_boxplot()
+```
+
+Month is likely affecting the use of bikes as the weather is different from month to month. This shoudl be included though multicollinearity is mostlikely present between month and season. 
+
+```{r}
+ggplot(bike,aes(x=holiday,y=count)) + geom_boxplot()
+```
+
+Holiday should be included in the regression since is does affect whether people will rent bikes or not in the DC area. this is probably due to the fact that people use the bikes for communiting rather than leisure.
+
+```{r}
+ggplot(bike,aes(x=weekday,y=count)) + geom_boxplot()
+```
+
+Day of the week appears to only midly affect the amount of bike sharing and there for is not a signifigant add to our model as it appears riders are riding for transportation around the area and have to travel on every day of the week. 
+
+```{r}
+ggplot(bike,aes(x=workingday,y=count)) + geom_boxplot()
+```
+
+We once again do not see a signifigant change in overall bike use on working days vs. non-working days. This is expected as people still travel to do errands and around the DC area on both types of days. 
+
+```{r}
+ggplot(bike,aes(x=weathersit,y=count)) + geom_boxplot()
+```
+
+Weather should be included in our regression as it has a high affect on whether or not bikes are being used as transportation. This seems reasonable as there are alternatives to traveling by bike if it is raining outside. 
+
+```{r}
+bike2 = bike %>% dplyr::select(-c(instant, dteday, registered, casual))
+```
+
+All model & empty model
+```{r}
+allmod = lm(count ~., bike2)
+summary(allmod)
+
+emptymod = lm(count ~1, bike2) 
+summary(emptymod)
+```
+
+Forward model
+```{r}
+forwardmod = stepAIC(emptymod, direction = "forward", scope=list(upper=allmod,lower=emptymod), trace = TRUE)
+
+summary(forwardmod) 
+
+```
+
+In our forward model we see hr, atemp, yr, weathersit, season, mnth, hum, weekday, holiday, windspeed, and temp. This model does not match all of our common sense observations, but it does have a strong r- squared at .6864 and a signifigant p-value. Overall the model includes certain factors that are strongly related like average temp and temperature which is probably not the best in a model due to multicolinerarity. 
+
+```{r}
+backmod = stepAIC(allmod, direction = "backward", trace = TRUE) 
+summary(backmod)
+```
+
+The backward model is the same as the forward model. When we look at the workingday variable it is perfectly correlated with the holiday and days of the week and therefore accounted or in other way within the data. 
+
+```{r}
+bike = bike %>% mutate(yr = as.integer(yr)-1)
+bike3 = bike %>% dplyr::select(-c(instant, dteday, registered, casual))
+
+allmod1 = lm(count ~., bike3)
+summary(allmod1)
+
+emptymod1 = lm(count ~1, bike3) 
+summary(emptymod1)
+```
+
+```{r}
+forwardmod1 = stepAIC(emptymod1, direction = "forward", scope=list(upper=allmod1,lower=emptymod1), trace = TRUE)
+
+summary(forwardmod1) 
+```
+
+The model components didn't change, we do notice that the variable in the summary says yr now instead of yr1 like it did in the first forward model. 
